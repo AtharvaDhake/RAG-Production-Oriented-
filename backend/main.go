@@ -156,6 +156,7 @@ func handleChat(w http.ResponseWriter, r *http.Request) {
 	defer gemRes.Body.Close()
 
 	gemResBytes, _ := io.ReadAll(gemRes.Body)
+	log.Printf("Gemini Response Body: %s", string(gemResBytes))
 	var gemData map[string]interface{}
 	json.Unmarshal(gemResBytes, &gemData)
 

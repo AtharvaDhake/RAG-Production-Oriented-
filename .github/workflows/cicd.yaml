@@ -37,11 +37,11 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPO/backend:$IMAGE_TAG \
-                       -t $ECR_REGISTRY/$ECR_REPO/backend:latest \
+          docker build -t $ECR_REGISTRY/$ECR_REPO:backend-$IMAGE_TAG \
+                       -t $ECR_REGISTRY/$ECR_REPO:backend-latest \
                        ./backend
-          docker push $ECR_REGISTRY/$ECR_REPO/backend:$IMAGE_TAG
-          docker push $ECR_REGISTRY/$ECR_REPO/backend:latest
+          docker push $ECR_REGISTRY/$ECR_REPO:backend-$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPO:backend-latest
 
       - name: Build, tag & push FRONTEND image to ECR
         env:
@@ -50,11 +50,11 @@ jobs:
         run: |
           docker build \
             --build-arg NEXT_PUBLIC_API_URL=http://${{ secrets.EC2_PUBLIC_IP }}:8081 \
-            -t $ECR_REGISTRY/$ECR_REPO/frontend:$IMAGE_TAG \
-            -t $ECR_REGISTRY/$ECR_REPO/frontend:latest \
+            -t $ECR_REGISTRY/$ECR_REPO:frontend-$IMAGE_TAG \
+            -t $ECR_REGISTRY/$ECR_REPO:frontend-latest \
             ./frontend
-          docker push $ECR_REGISTRY/$ECR_REPO/frontend:$IMAGE_TAG
-          docker push $ECR_REGISTRY/$ECR_REPO/frontend:latest
+          docker push $ECR_REGISTRY/$ECR_REPO:frontend-$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPO:frontend-latest
 
   # ─────────────────────────────────────────────────────────────
   # JOB 2 — Continuous Deployment
@@ -88,8 +88,8 @@ jobs:
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
-          docker pull $ECR_REGISTRY/$ECR_REPO/backend:latest
-          docker pull $ECR_REGISTRY/$ECR_REPO/frontend:latest
+          docker pull $ECR_REGISTRY/$ECR_REPO:backend-latest
+          docker pull $ECR_REGISTRY/$ECR_REPO:frontend-latest
 
       - name: Write .env file on EC2
         run: |
@@ -103,8 +103,8 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
           # Export image names — docker-compose.yml reads these via ${BACKEND_IMAGE}
-          export BACKEND_IMAGE=$ECR_REGISTRY/$ECR_REPO/backend:latest
-          export FRONTEND_IMAGE=$ECR_REGISTRY/$ECR_REPO/frontend:latest
+          export BACKEND_IMAGE=$ECR_REGISTRY/$ECR_REPO:backend-latest
+          export FRONTEND_IMAGE=$ECR_REGISTRY/$ECR_REPO:frontend-latest
           docker compose up -d
 
       - name: Verify deployment

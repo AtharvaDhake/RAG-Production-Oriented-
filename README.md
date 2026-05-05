@@ -345,9 +345,7 @@ docker compose down
 ### Step 2: Amazon ECR Repositories
 
 1. Go to **AWS Console → ECR → Create repository** (Private)
-2. Create **two repositories**:
-   - `rag-production/backend`
-   - `rag-production/frontend`
+2. Create **one repository** named: `rag-production`
 3. Choose your region (e.g., `us-east-1`)
 4. Note the registry URI: `123456789012.dkr.ecr.us-east-1.amazonaws.com`
 
@@ -436,7 +434,7 @@ Go to: **Settings → Secrets and variables → Actions → New repository secre
 | `AWS_ACCESS_KEY_ID` | IAM user CSV (Step 1) |
 | `AWS_SECRET_ACCESS_KEY` | IAM user CSV (Step 1) |
 | `AWS_DEFAULT_REGION` | e.g., `us-east-1` |
-| `ECR_REPO` | `rag-production` (ECR repo prefix) |
+| `ECR_REPO` | `rag-production` (The name of your single ECR repo) |
 | `EC2_PUBLIC_IP` | EC2 → Instance Summary → Public IPv4 address |
 | `GEMINI_API_KEY` | [Google AI Studio](https://aistudio.google.com/) |
 | `SUPABASE_URL` | Supabase → Project Settings → API |

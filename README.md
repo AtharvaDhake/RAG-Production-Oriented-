@@ -511,17 +511,6 @@ Send a question and receive an AI-generated answer with citations.
 }
 ```
 
-### `GET /health`
-
-Returns the health status of the backend. Used by Docker healthcheck.
-
-**Response:**
-```json
-{ "status": "ok" }
-```
-
----
-
 ## 📄 File Explanations
 
 | File | Role |
@@ -538,7 +527,6 @@ Returns the health status of the backend. Used by Docker healthcheck.
 | `docker-compose.yml` | Defines both services, their ports, env vars, healthcheck, and start order dependency. |
 | `.github/workflows/cicd.yaml` | CI job builds + pushes images to ECR. CD job (on EC2) pulls images and starts containers. |
 | `injest.py` | One-time ingestion script. Reads PDF → chunks → embeds → uploads to Supabase. |
-| `.env.example` | Safe template showing required variables. Commit this. |
 | `.gitignore` | Protects `.env`, `node_modules`, build artifacts, Go binaries from being committed. |
 
 ---
@@ -558,15 +546,8 @@ Returns the health status of the backend. Used by Docker healthcheck.
 
 ---
 
-## 📜 License
-
-MIT License — free to use, modify, and distribute.
-
----
-
 ## 🙏 Acknowledgements
 
 - Architecture inspired by [this Medium article](https://medium.com/@jushijun/building-a-course-specific-ai-study-assistant-integrating-rag-aws-github-ci-cd-and-docker-c82ddd5f8763) by Shijun Ju
-- Embeddings powered by [sentence-transformers](https://www.sbert.net/)
 - Vector search powered by [Supabase pgvector](https://supabase.com/docs/guides/ai/vector-columns)
 - Answer generation by [Google Gemini](https://ai.google.dev/)

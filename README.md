@@ -550,4 +550,4 @@ Send a question and receive an AI-generated answer with citations.
 
 - Architecture inspired by [this Medium article](https://medium.com/@jushijun/building-a-course-specific-ai-study-assistant-integrating-rag-aws-github-ci-cd-and-docker-c82ddd5f8763) by Shijun Ju
 - Vector search powered by [Supabase pgvector](https://supabase.com/docs/guides/ai/vector-columns)
-- Answer generation by [Google Gemini](https://ai.google.dev/)
+

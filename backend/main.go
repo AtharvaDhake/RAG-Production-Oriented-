@@ -136,7 +136,7 @@ func handleChat(w http.ResponseWriter, r *http.Request) {
 
 	// 4. Call Gemini API
 	geminiKey := os.Getenv("GEMINI_API_KEY")
-	geminiURL := "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + geminiKey
+	geminiURL := "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + geminiKey
 
 	geminiReqBody, _ := json.Marshal(map[string]interface{}{
 		"contents": []map[string]interface{}{

@@ -1,4 +1,4 @@
-# 📚 RAG Study Assistant — Production Deployment
+# 📚 RAG — Production Deployment
 
 > An AI-powered Retrieval-Augmented Generation (RAG) chatbot that answers questions from your own documents. Built with Go, Next.js, Python, Supabase, and Google Gemini — deployed on AWS EC2 via Docker containers and automated GitHub Actions CI/CD.
 

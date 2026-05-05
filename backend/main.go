@@ -52,6 +52,7 @@ func main() {
 }
 
 func handleChat(w http.ResponseWriter, r *http.Request) {
+	log.Printf("Received %s request for /chat from %s", r.Method, r.RemoteAddr)
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -135,7 +136,7 @@ func handleChat(w http.ResponseWriter, r *http.Request) {
 
 	// 4. Call Gemini API
 	geminiKey := os.Getenv("GEMINI_API_KEY")
-	geminiURL := "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + geminiKey
+	geminiURL := "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + geminiKey
 
 	geminiReqBody, _ := json.Marshal(map[string]interface{}{
 		"contents": []map[string]interface{}{

@@ -116,6 +116,10 @@ export default function Home() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: userMsg.content }),
       });
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || `Server error: ${res.status}`);
+      }
       
       const data = await res.json();
       
@@ -128,13 +132,13 @@ export default function Home() {
             : msg
         )
       );
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
       playSound('receive');
       setMessages(prev => 
         prev.map(msg => 
           msg.id === typingId 
-            ? { ...msg, isTyping: false, content: 'Error communicating with the backend API.' }
+            ? { ...msg, isTyping: false, content: `Error: ${error.message || 'Connection failed'}` }
             : msg
         )
       );

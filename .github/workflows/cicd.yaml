@@ -1,0 +1,116 @@
+name: CI/CD — Build, Push & Deploy
+
+on:
+  push:
+    branches: [main]
+
+env:
+  AWS_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+  ECR_REPO: ${{ secrets.ECR_REPO }}
+
+jobs:
+  # ─────────────────────────────────────────────────────────────
+  # JOB 1 — Continuous Integration
+  # Runs on GitHub-hosted runner: builds Docker images & pushes to ECR
+  # ─────────────────────────────────────────────────────────────
+  build-and-push:
+    name: CI — Build & Push to ECR
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Log in to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag & push BACKEND image to ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPO/backend:$IMAGE_TAG \
+                       -t $ECR_REGISTRY/$ECR_REPO/backend:latest \
+                       ./backend
+          docker push $ECR_REGISTRY/$ECR_REPO/backend:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPO/backend:latest
+
+      - name: Build, tag & push FRONTEND image to ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build \
+            --build-arg NEXT_PUBLIC_API_URL=http://${{ secrets.EC2_PUBLIC_IP }}:8081 \
+            -t $ECR_REGISTRY/$ECR_REPO/frontend:$IMAGE_TAG \
+            -t $ECR_REGISTRY/$ECR_REPO/frontend:latest \
+            ./frontend
+          docker push $ECR_REGISTRY/$ECR_REPO/frontend:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPO/frontend:latest
+
+  # ─────────────────────────────────────────────────────────────
+  # JOB 2 — Continuous Deployment
+  # Runs on self-hosted EC2 runner: pulls from ECR and starts containers
+  # ─────────────────────────────────────────────────────────────
+  deploy:
+    name: CD — Deploy to EC2
+    runs-on: self-hosted          # ← your EC2 GitHub runner
+    needs: build-and-push
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Log in to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Stop & remove existing containers
+        run: |
+          docker compose down --remove-orphans || true
+
+      - name: Pull latest images from ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          docker pull $ECR_REGISTRY/$ECR_REPO/backend:latest
+          docker pull $ECR_REGISTRY/$ECR_REPO/frontend:latest
+
+      - name: Write .env file on EC2
+        run: |
+          printf 'GEMINI_API_KEY=%s\nSUPABASE_URL=%s\nSUPABASE_SERVICE_ROLE_KEY=%s\n' \
+            '${{ secrets.GEMINI_API_KEY }}' \
+            '${{ secrets.SUPABASE_URL }}' \
+            '${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}' > .env
+
+      - name: Start containers via Docker Compose
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          # Export image names — docker-compose.yml reads these via ${BACKEND_IMAGE}
+          export BACKEND_IMAGE=$ECR_REGISTRY/$ECR_REPO/backend:latest
+          export FRONTEND_IMAGE=$ECR_REGISTRY/$ECR_REPO/frontend:latest
+          docker compose up -d
+
+      - name: Verify deployment
+        run: |
+          echo "Running containers:"
+          docker container ls
+
+      - name: Clean up old Docker images
+        run: docker image prune -f

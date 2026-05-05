@@ -1,0 +1,34 @@
+# ── Secrets & Environment ─────────────────────
+.env
+.env.*
+!.env.example
+
+# ── Python ────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# ── Go ────────────────────────────────────────
+backend/server
+*.exe
+
+# ── Node / Next.js ────────────────────────────
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+
+# ── Docker ────────────────────────────────────
+*.tar
+
+# ── GitHub Actions runner ─────────────────────
+actions-runner/
+
+# ── OS ────────────────────────────────────────
+.DS_Store
+Thumbs.db

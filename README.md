@@ -13,6 +13,7 @@
 - [How RAG Works](#-how-rag-works)
 - [Local Development Setup](#-local-development-setup)
 - [Data Ingestion](#-data-ingestion)
+- [RAG Evaluation](#-rag-evaluation)
 - [Docker — Running with Compose](#-docker--running-with-compose)
 - [AWS + CI/CD Deployment](#-aws--cicd-deployment)
   - [Step 1: AWS IAM User](#step-1-aws-iam-user)
@@ -298,6 +299,30 @@ python injest.py
 4. Uploads all chunks + embeddings to Supabase in batches of 200
 
 > ⚠️ First run downloads ~400MB model. Subsequent runs are instant.
+
+---
+
+## 📊 RAG Evaluation
+
+We use [Ragas](https://docs.ragas.io/) to evaluate the performance of our RAG pipeline quantitatively using Gemini as the judge. The evaluation script measures:
+- **Faithfulness**: Factuality of the answer based on the retrieved context.
+- **Answer Relevancy**: How well the generated answer addresses the user's question.
+- **Context Precision**: Relevance and ranking of the retrieved document snippets.
+- **Context Recall**: Whether the retrieved snippets successfully capture the required information.
+
+### Running Evaluation
+
+1. **Ensure your Go backend is running** (either locally or on AWS). The `evaluate.py` script makes real HTTP requests to the `/chat` endpoint.
+2. **Install evaluation dependencies**:
+   ```bash
+   pip install -r evaluation/requirements.txt
+   ```
+3. **Run the evaluation**:
+   ```bash
+   python evaluation/evaluate.py
+   ```
+
+The script will evaluate the sample questions in `evaluation/test_set.json` and save detailed metrics to `evaluation/evaluation_results.csv`.
 
 ---
 

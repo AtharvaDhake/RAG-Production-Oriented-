@@ -87,7 +87,8 @@ func handleChat(w http.ResponseWriter, r *http.Request) {
 
 	rpcBody, _ := json.Marshal(map[string]interface{}{
 		"query_embedding": embedData.Embedding,
-		"match_count":     5,
+		"match_count":     10,
+		"match_threshold": 0.70,
 		"filter":          map[string]interface{}{},
 	})
 
@@ -120,6 +121,15 @@ func handleChat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if len(matches) == 0 {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(ChatResponse{
+			Reply:     "Hello! I couldn't find any highly relevant information about that in the provided documents. Could you please ask a specific question related to the course materials?",
+			Citations: []Citation{},
+		})
+		return
+	}
+
 	// 3. Build Prompt for Gemini
 	contextText := ""
 	var citations []Citation
@@ -136,7 +146,7 @@ func handleChat(w http.ResponseWriter, r *http.Request) {
 
 	// 4. Call Gemini API
 	geminiKey := os.Getenv("GEMINI_API_KEY")
-	geminiURL := "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=" + geminiKey
+	geminiURL := "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=" + geminiKey
 
 	geminiReqBody, _ := json.Marshal(map[string]interface{}{
 		"contents": []map[string]interface{}{

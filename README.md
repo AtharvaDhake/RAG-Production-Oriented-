@@ -177,6 +177,37 @@ User Question
 
 ---
 
+## 🧠 Detailed Codebase Architecture Analysis
+
+This section provides a deeper, multi-layered evaluation of the internal system design, module responsibilities, and data flow patterns.
+
+### 1. System Flow & Data Modeling
+The application employs a microservices-inspired architecture, coordinated by Docker Compose.
+- **Frontend (Next.js):** Manages user interactions ephemerally. Uses React state for conversation history and markdown rendering for rich text formatting.
+- **Backend Orchestrator (Go):** Acts as the central API gateway. It receives HTTP requests, delegates embedding generation to the Python service, orchestrates vector search in Supabase, and constructs strict contextual prompts for the LLM. 
+- **Data Model:** Documents are parsed into chunks. Each chunk is stored in Supabase `pgvector` with:
+  - `content`: Raw text of the chunk.
+  - `embedding`: 768-dimensional float array.
+  - `metadata`: JSON object containing source file name and page number for precise citations.
+
+### 2. Module Responsibilities
+- **`main.go`:** The core routing and business logic layer. Implements sequential API calls to coordinate the entire RAG pipeline from a single endpoint (`/chat`).
+- **`embed_server.py`:** A dedicated, single-purpose ML worker. By isolating this from Go, the system leverages Python's superior Machine Learning ecosystem (`sentence-transformers`, `torch`) while keeping the main API layer in high-performance Go.
+- **`injest.py`:** The ETL (Extract, Transform, Load) pipeline. Uses `PyMuPDF` for PDF extraction and robust text chunking algorithms to ensure optimal embedding quality.
+- **`evaluate.py`:** A standalone Quality Assurance module utilizing the `Ragas` framework. It injects test queries and evaluates the system's output against standard metrics (Faithfulness, Answer Relevancy, Context Recall).
+
+### 3. Design Decisions & Patterns
+- **Threshold-Based Filtering:** The backend employs a strict `match_threshold` (0.70) during Supabase vector searches. This prevents "hallucinations by association" and allows the system to gracefully handle casual greetings or off-topic queries by bypassing the LLM entirely.
+- **Stateless Architecture:** Both the Go backend and Python embed server are entirely stateless. Context is retrieved and assembled dynamically per request. This enables trivial horizontal scaling if deployed to a Kubernetes cluster.
+- **Multi-Stage Containerization:** The Dockerfiles utilize multi-stage builds to compile Go and Next.js artifacts, discarding bulky build dependencies to create highly optimized, lightweight production images.
+
+### 4. Scalability & Future Optimizations
+- **Local Embedding Constraints:** The CPU-bound local embedding generation in `embed_server.py` is currently the primary computational bottleneck and could be moved to a GPU instance or scaled horizontally under heavy load.
+- **Conversation History:** The system currently treats every query as an isolated event. Implementing session IDs and a `conversations` database table would enable multi-turn, context-aware chatting.
+- **Response Streaming:** Implementing Server-Sent Events (SSE) or WebSockets from the Gemini API through the Go backend to the Next.js frontend would drastically improve perceived latency for the end user.
+
+---
+
 ## 💻 Local Development Setup
 
 ### Prerequisites

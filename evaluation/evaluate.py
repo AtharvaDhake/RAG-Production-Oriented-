@@ -7,8 +7,10 @@ from openai import OpenAI
 from ragas import evaluate
 from ragas.metrics import faithfulness, answer_relevancy, context_precision, context_recall
 from ragas.llms import llm_factory
-from ragas.embeddings.base import embedding_factory
+from ragas.embeddings import HuggingFaceEmbeddings
 from dotenv import load_dotenv
+import time
+from ragas.run_config import RunConfig
 
 # Load environment variables from root
 load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
@@ -55,6 +57,8 @@ def main():
             "contexts": contexts,
             "ground_truth": ground_truth
         })
+        print("Sleeping for 10 seconds to avoid rate limits...")
+        time.sleep(10)
 
     # 2. Convert to Ragas Dataset
     df = pd.DataFrame(results)
@@ -65,18 +69,20 @@ def main():
         api_key=os.getenv("GEMINI_API_KEY"),
         base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
     )
-    llm = llm_factory(GEMINI_MODEL, client=gemini_client)
+    llm = llm_factory(GEMINI_MODEL, client=gemini_client, max_tokens=8192)
 
     # Setup embeddings for AnswerRelevancy (same model as your RAG pipeline)
-    embeddings = embedding_factory("huggingface", model="sentence-transformers/all-mpnet-base-v2")
+    embeddings = HuggingFaceEmbeddings(model="sentence-transformers/all-mpnet-base-v2")
 
     # 4. Run Evaluation
     print("\nCalculating Ragas metrics...")
+    run_config = RunConfig(max_workers=1, max_retries=10)
     score = evaluate(
         dataset,
         metrics=[faithfulness, answer_relevancy, context_precision, context_recall],
         llm=llm,
         embeddings=embeddings,
+        run_config=run_config
     )
 
     # 5. Show results

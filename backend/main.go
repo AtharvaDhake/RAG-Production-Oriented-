@@ -88,7 +88,7 @@ func handleChat(w http.ResponseWriter, r *http.Request) {
 	rpcBody, _ := json.Marshal(map[string]interface{}{
 		"query_embedding": embedData.Embedding,
 		"match_count":     10,
-		"match_threshold": 0.70,
+		"match_threshold": 0.30, // Lowered threshold since all-mpnet scores tend to be lower
 		"filter":          map[string]interface{}{},
 	})
 

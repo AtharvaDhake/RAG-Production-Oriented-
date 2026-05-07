@@ -256,6 +256,7 @@ create table chunks (
 create or replace function match_documents(
   query_embedding vector(768),
   match_count     int,
+  match_threshold float,
   filter          jsonb default '{}'
 )
 returns table (
@@ -271,6 +272,7 @@ begin
     chunks.metadata,
     1 - (chunks.embedding <=> query_embedding) as similarity
   from chunks
+  where 1 - (chunks.embedding <=> query_embedding) > match_threshold
   order by chunks.embedding <=> query_embedding
   limit match_count;
 end;
